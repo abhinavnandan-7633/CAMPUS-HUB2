@@ -1,1 +1,575 @@
-# CAMPUS-HUB2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Hub Platform</title>
+    <!-- Fonts: Outfit (Geometric) & Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel for running JSX in browser -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body { font-family: 'Open Sans', sans-serif; }
+        .futura-logo { font-family: 'Outfit', sans-serif; letter-spacing: -0.05em; text-transform: uppercase; }
+        
+        /* INTERACTIVE GLOW SYSTEM */
+        .glow-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
+        .glow-hover:hover { 
+            border-color: rgba(37, 99, 235, 0.4); 
+            box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.15);
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 1);
+            z-index: 20;
+        }
+
+        .btn-glow { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .btn-glow:hover { 
+            box-shadow: 0 0 25px rgba(37, 99, 235, 0.45); 
+            filter: brightness(1.1);
+            transform: scale(1.03);
+        }
+
+        .nav-link { position: relative; transition: all 0.3s ease; font-weight: 700; color: #64748b; }
+        .nav-link:hover {
+            color: #2563eb;
+            text-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+        }
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #2563eb;
+            box-shadow: 0 0 10px #2563eb;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-link:hover:after { width: 100%; }
+
+        .input-glow { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            transition: all 0.3s ease; 
+        }
+        .input-glow:hover {
+            border-color: rgba(37, 99, 235, 0.5);
+            box-shadow: 0 0 12px rgba(37, 99, 235, 0.1);
+        }
+        .input-glow:focus { 
+            border-color: #2563eb; 
+            box-shadow: 0 0 18px rgba(37, 99, 235, 0.25); 
+            outline: none; 
+            background: #fff;
+        }
+
+        .details-scrollbar::-webkit-scrollbar { width: 6px; }
+        .details-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .details-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .details-scrollbar::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        .neon-text-glow { text-shadow: 0 0 15px rgba(37, 99, 235, 0.3); }
+
+        canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 0; opacity: 0.8; }
+    </style>
+</head>
+<body class="bg-[#F8FAFC]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const INITIAL_EVENTS = [
+            {
+                id: 'initial-1',
+                title: "AI & Machine Learning Seminar",
+                category: "Seminar",
+                department: "Computer Science",
+                date: "2026-04-15",
+                time: "10:00 AM",
+                venue: "Main Auditorium",
+                organizer: "Dr. Sarah Chen, Dept. of CSE",
+                description: "Deep dive into the latest trends in Generative AI and neural networks. This session will cover the impact of LLMs in engineering fields.",
+                verified: true,
+                createdAt: Date.now()
+            }
+        ];
+
+        const ADMIN_USERNAMES = ["B25CS1101", "B25CS1110", "B25CS1123", "B25CS1132", "B25CS1137", "B25CS1150", "B25CS1160"];
+        const ADMIN_PASSWORD = "ENGP2026";
+
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        const ConnectionsBackground = () => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let particles = [];
+                const particleCount = 55;
+                const connectionDistance = 200;
+                const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+                class Particle {
+                    constructor() {
+                        this.x = Math.random() * canvas.width;
+                        this.y = Math.random() * canvas.height;
+                        this.vx = (Math.random() - 0.5) * 0.4;
+                        this.vy = (Math.random() - 0.5) * 0.4;
+                        this.radius = Math.random() * 2 + 1;
+                    }
+                    update() {
+                        this.x += this.vx; this.y += this.vy;
+                        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                    }
+                    draw() {
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(37, 99, 235, 0.2)'; ctx.fill();
+                    }
+                }
+                const init = () => {
+                    particles = []; for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+                };
+                const animate = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    particles.forEach((p, i) => {
+                        p.update(); p.draw();
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const p2 = particles[j];
+                            const dx = p.x - p2.x; const dy = p.y - p2.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < connectionDistance) {
+                                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+                                ctx.strokeStyle = `rgba(37, 99, 235, ${0.12 * (1 - dist / connectionDistance)})`;
+                                ctx.lineWidth = 1.2; ctx.stroke();
+                            }
+                        }
+                    });
+                    requestAnimationFrame(animate);
+                };
+                window.addEventListener('resize', resize);
+                resize(); init(); animate();
+                return () => window.removeEventListener('resize', resize);
+            }, []);
+            return <canvas ref={canvasRef} />;
+        };
+
+        function App() {
+            const [currentPage, setCurrentPage] = useState('home');
+            const [user, setUser] = useState(null);
+            const [events, setEvents] = useState(INITIAL_EVENTS);
+            const [selectedEvent, setSelectedEvent] = useState(null);
+            const [notification, setNotification] = useState(null);
+            const [loginError, setLoginError] = useState('');
+
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [currentPage, events, selectedEvent, notification]);
+
+            const showNotification = (msg) => {
+                setNotification(msg);
+                setTimeout(() => setNotification(null), 3000);
+            };
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const uname = formData.get('username');
+                const pword = formData.get('password');
+                if (ADMIN_USERNAMES.includes(uname) && pword === ADMIN_PASSWORD) {
+                    setUser({ username: uname });
+                    setCurrentPage('admin');
+                    showNotification("Identity Verified: Welcome Admin");
+                } else {
+                    setLoginError('Invalid Identification Sequence');
+                }
+            };
+
+            const addEvent = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                const isDateTBA = formData.get('dateTBA') === 'on';
+                const isTimeTBA = formData.get('timeTBA') === 'on';
+
+                const newEvent = {
+                    id: Date.now(),
+                    title: formData.get('title') || "Untitled Event",
+                    category: formData.get('category'),
+                    department: formData.get('department'),
+                    date: isDateTBA ? "TBA" : (formData.get('date') || "TBA"),
+                    time: isTimeTBA ? "TBA" : (formData.get('time') || "TBA"),
+                    venue: formData.get('venue') || "TBA",
+                    organizer: formData.get('organizer'),
+                    description: formData.get('description'),
+                    createdAt: Date.now()
+                };
+                setEvents([newEvent, ...events]);
+                form.reset();
+                showNotification("Event Added to Feed");
+            };
+
+            const deleteEvent = (id) => {
+                setEvents(events.filter(ev => ev.id !== id));
+                showNotification("Event Removed");
+            };
+
+            return (
+                <div className="min-h-screen relative overflow-x-hidden">
+                    <ConnectionsBackground />
+
+                    <div className="relative z-10">
+                        {notification && (
+                            <div className="fixed top-6 right-6 z-[100] bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl animate-bounce font-bold flex items-center gap-3">
+                                <Icon name="zap" className="animate-pulse" /> {notification}
+                            </div>
+                        )}
+
+                        <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+                            <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+                                <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setCurrentPage('home')}>
+                                    <div className="bg-blue-600 p-2 rounded-xl transition-transform group-hover:scale-110 shadow-lg">
+                                        <Icon name="bell" className="text-white w-6 h-6" />
+                                    </div>
+                                    <span className="text-2xl font-black futura-logo text-slate-900">Campus <span className="text-blue-600">Hub</span></span>
+                                </div>
+                                <div className="flex items-center gap-8">
+                                    <div className="hidden md:flex items-center gap-8 font-bold text-[11px] tracking-widest">
+                                        <button onClick={() => setCurrentPage('events')} className={`nav-link ${currentPage === 'events' ? 'text-blue-600' : ''}`}>EVENTS</button>
+                                        <button onClick={() => setCurrentPage('analytics')} className={`nav-link ${currentPage === 'analytics' ? 'text-blue-600' : ''}`}>ANALYSIS</button>
+                                    </div>
+                                    {user ? (
+                                        <div className="flex items-center gap-4">
+                                            <button onClick={() => setCurrentPage('admin')} className="px-5 py-2.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase border border-blue-100 btn-glow">DASHBOARD</button>
+                                            <button onClick={() => setUser(null)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Icon name="log-out" /></button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => setCurrentPage('login')} className="px-6 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest btn-glow shadow-xl shadow-slate-200 transition-all">Admin Access</button>
+                                    )}
+                                </div>
+                            </div>
+                        </nav>
+
+                        <main>
+                            {currentPage === 'home' && <HomeView setPage={setCurrentPage} />}
+                            {currentPage === 'events' && <EventsView events={events} setSelected={setSelectedEvent} />}
+                            {currentPage === 'analytics' && <AnalyticsView />}
+                            {currentPage === 'login' && <LoginView handleLogin={handleLogin} error={loginError} />}
+                            {currentPage === 'admin' && (user ? <AdminDashboard events={events} addEvent={addEvent} deleteEvent={deleteEvent} /> : <LoginView handleLogin={handleLogin} error={loginError} />)}
+                        </main>
+
+                        <footer className="bg-white/95 backdrop-blur-xl border-t border-slate-200 mt-20 transition-all">
+                            <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-12 gap-12 text-left">
+                                <div className="md:col-span-4 space-y-6">
+                                    <div className="flex items-center gap-3 group cursor-default">
+                                        <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-100 transition-transform group-hover:scale-110">
+                                            <Icon name="cpu" className="w-6 h-6" />
+                                        </div>
+                                        <span className="text-2xl font-black tracking-tight futura-logo text-slate-900">CAMPUS <span className="text-blue-600">HUB</span></span>
+                                    </div>
+                                    <p className="text-slate-500 text-sm leading-relaxed max-w-sm font-medium">
+                                        The synchronized digital nervous system for modern campus engagement. Bridging the gap between administration and student body through real-time verified intelligence.
+                                    </p>
+                                    <div className="flex gap-4 pt-2">
+                                        <a href="mailto:campushub2026@gmail.com" className="p-2.5 bg-blue-50 rounded-xl text-blue-600 hover:text-white hover:bg-blue-600 transition-all cursor-pointer shadow-sm"><Icon name="mail" className="w-5 h-5" /></a>
+                                        <div className="p-2.5 bg-slate-50 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"><Icon name="globe" className="w-5 h-5" /></div>
+                                    </div>
+                                </div>
+                                <div className="md:col-span-5">
+                                    <h4 className="font-black text-[11px] uppercase tracking-[0.25em] text-slate-400 mb-8 flex items-center gap-2"><Icon name="users" className="w-4 h-4 text-blue-500" /> Developed by</h4>
+                                    <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                                        {['Abhinav Nandan', 'Allen Victor', 'Devika Binu', 'Johana Susan Joby', 'Levi Mathew Lal', 'Revathy AS', 'Soorya SS'].map(name => (
+                                            <div key={name} className="flex items-center gap-2 group cursor-default">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover:bg-blue-500 group-hover:scale-125 transition-all shadow-[0_0_8px_transparent] group-hover:shadow-blue-200"></div>
+                                                <span className="text-[14px] font-bold text-slate-600 group-hover:text-blue-600 transition-colors">{name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="md:col-span-3 space-y-8 md:text-right flex flex-col items-end">
+                                    <div>
+                                        <h4 className="text-[11px] text-slate-400 uppercase tracking-widest font-black mb-4">Contact Support</h4>
+                                        <div className="flex flex-col gap-2 items-end font-bold text-slate-600">
+                                            <a href="tel:9074618920" className="hover:text-blue-600 transition-colors group flex items-center gap-2">9074618920 <Icon name="phone" className="w-4 h-4 text-blue-500 group-hover:animate-bounce" /></a>
+                                            <a href="tel:8050480504" className="hover:text-blue-600 transition-colors group flex items-center gap-2">8050480504 <Icon name="phone" className="w-4 h-4 text-blue-500 group-hover:animate-bounce" /></a>
+                                        </div>
+                                    </div>
+                                    <div className="pt-4 border-t border-slate-100 w-full md:w-auto">
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2 text-right">Build Environment</p>
+                                        <div className="flex items-center gap-2 justify-end text-emerald-600 font-bold text-[11px]">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Cloud Terminal v4.2.5
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="border-t border-slate-100 bg-slate-50/50 py-6">
+                                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <span>© 2026 Campus Hub Digital. All rights reserved.</span>
+                                    <div className="flex gap-8">
+                                        <span className="hover:text-blue-600 cursor-pointer transition-colors">System Protocols</span>
+                                        <span className="hover:text-blue-600 cursor-pointer transition-colors">User Agreement</span>
+                                        <span className="hover:text-blue-600 cursor-pointer transition-colors">Data Privacy</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </footer>
+
+                        {selectedEvent && <EventModal event={selectedEvent} close={() => setSelectedEvent(null)} />}
+                    </div>
+                </div>
+            );
+        }
+
+        function HomeView({ setPage }) {
+            const [timeData, setTimeData] = useState({
+                time: '',
+                date: '',
+                greeting: ''
+            });
+
+            useEffect(() => {
+                const updateClock = () => {
+                    const now = new Date();
+                    const hours = now.getHours();
+                    
+                    // Greeting Logic based on Local Device Time
+                    // 12 AM (0) to 12 PM (12): Good Morning
+                    // 12 PM (12) to 3 PM (15): Good Afternoon
+                    // 3 PM (15) to 12 AM (0): Good Evening
+                    let greeting = "Good Evening";
+                    if (hours >= 0 && hours < 12) greeting = "Good Morning";
+                    else if (hours >= 12 && hours < 15) greeting = "Good Afternoon";
+
+                    setTimeData({
+                        time: now.toLocaleTimeString(),
+                        date: now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                        greeting: greeting
+                    });
+                };
+
+                updateClock();
+                const i = setInterval(updateClock, 1000);
+                return () => clearInterval(i);
+            }, []);
+
+            return (
+                <section className="pt-24 pb-48 px-4 text-center">
+                    <h1 className="text-8xl md:text-[120px] font-black text-slate-900 mb-10 futura-logo neon-text-glow">Campus <span className="text-blue-600">Hub</span></h1>
+                    
+                    <div className="mb-12 flex flex-col items-center">
+                        <div className="text-slate-400 text-sm md:text-lg font-black uppercase tracking-[0.3em] mb-4 opacity-80">{timeData.date}</div>
+                        <div className="text-slate-900 text-7xl md:text-[100px] font-black tracking-tighter mb-4 tabular-nums">{timeData.time}</div>
+                        <div className="px-10 py-3 bg-blue-50 text-blue-700 rounded-2xl text-[12px] font-black uppercase tracking-[0.4em] border border-blue-100 shadow-sm transition-all hover:bg-blue-600 hover:text-white cursor-default">
+                            {timeData.greeting}
+                        </div>
+                    </div>
+
+                    <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-3xl mx-auto mb-16 leading-relaxed">The ultimate college notification ecosystem. Real-time updates with precision timing.</p>
+                    
+                    <button onClick={() => setPage('events')} className="px-12 py-5 bg-blue-600 text-white rounded-2xl font-black uppercase text-[11px] btn-glow shadow-xl flex items-center gap-3 mx-auto">
+                        EXPLORE EVENTS <Icon name="arrow-right" />
+                    </button>
+                </section>
+            );
+        }
+
+        function EventsView({ events, setSelected }) {
+            const [filter, setFilter] = useState('All');
+            const filtered = filter === 'All' ? events : events.filter(e => e.category === filter);
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-24">
+                    <div className="text-center mb-16 uppercase">
+                        <h2 className="text-5xl font-black text-slate-900 futura-logo mb-12">Campus Feed</h2>
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            {['All', 'Seminar', 'Workshop', 'Placement', 'Culturals'].map(c => (
+                                <button key={c} onClick={() => setFilter(c)} className={`px-8 py-3 rounded-full text-[10px] font-black border transition-all ${filter === c ? 'bg-blue-600 text-white border-blue-600 shadow-xl' : 'bg-white text-slate-500 hover:border-blue-600'}`}>{c}</button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-10">
+                        {filtered.map(e => (
+                            <div key={e.id} className="bg-white border border-slate-100 rounded-[40px] p-10 flex flex-col transition-all duration-500 h-full group glow-hover shadow-sm">
+                                <span className="text-[8px] font-black text-slate-400 mb-6 uppercase tracking-widest">{e.category}</span>
+                                <h3 className="text-2xl font-black text-slate-900 futura-logo mb-6 group-hover:text-blue-600 transition-colors">{e.title}</h3>
+                                <div className="space-y-4 mb-10 bg-slate-50 p-6 rounded-[24px] text-[10px] font-bold">
+                                    <div className="flex items-center gap-3 text-blue-600"><Icon name="calendar" /> {e.date}</div>
+                                    <div className="flex items-center gap-3 text-slate-500 group-hover:text-slate-800 transition-colors"><Icon name="map-pin" /> {e.venue || "TBA"}</div>
+                                </div>
+                                <button onClick={() => setSelected(e)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] btn-glow transition-all">VIEW DETAILS</button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function EventModal({ event, close }) {
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={close}></div>
+                    <div className="relative bg-white w-full max-w-2xl rounded-[32px] flex flex-col max-h-[90vh] overflow-hidden border shadow-2xl">
+                        <div className="h-2.5 w-full bg-blue-600 flex-shrink-0"></div>
+                        <div className="p-10 overflow-y-auto details-scrollbar">
+                            <div className="flex justify-between items-start mb-8">
+                                <div>
+                                    <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded mb-4 border border-blue-100 transition-all hover:bg-blue-600 hover:text-white cursor-default">{event.category}</span>
+                                    <h2 className="text-4xl font-black text-slate-900 futura-logo">{event.title}</h2>
+                                    <div className="flex items-center gap-2 text-emerald-600 text-[10px] font-black uppercase mt-2"><Icon name="check-circle" className="w-4 h-4" /> Official Campus Verification</div>
+                                </div>
+                                <button onClick={close} className="p-3 bg-slate-50 rounded-xl hover:text-red-500 transition-all sticky top-0"><Icon name="x" /></button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-8 text-[11px] font-bold">
+                                <div className="p-4 bg-slate-50 rounded-2xl flex gap-3"><Icon name="calendar" className="text-blue-600"/> {event.date}</div>
+                                <div className="p-4 bg-slate-50 rounded-2xl flex gap-3"><Icon name="map-pin" className="text-blue-600"/> {event.venue}</div>
+                            </div>
+                            <div className="bg-slate-50 p-6 rounded-2xl mb-8 italic text-slate-600">"{event.description}"</div>
+                            <div className="p-4 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400">
+                                <span>Organizer: {event.organizer}</span>
+                                <span>Dept: {event.department}</span>
+                            </div>
+                            <button onClick={close} className="w-full mt-8 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] btn-glow">DISMISS</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function AnalyticsView() {
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-24">
+                    <div className="text-center mb-16 uppercase tracking-tighter">
+                        <h2 className="text-5xl font-black text-slate-900 futura-logo neon-text-glow">Efficiency Matrix</h2>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-12">
+                        <div className="bg-white p-12 rounded-[48px] border shadow-sm glow-hover uppercase">
+                            <h3 className="font-black text-2xl mb-10 futura-logo text-blue-600">Information Saturation</h3>
+                            <div className="space-y-12">
+                                {[{l:"Digital Reach", v:95}, {l:"Manual Reach", v:35}].map(item => (
+                                    <div key={item.l}>
+                                        <div className="flex justify-between text-[10px] font-black mb-4 uppercase text-slate-500 transition-all hover:text-blue-600"><span>{item.l}</span><span>{item.v}%</span></div>
+                                        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner"><div className="h-full bg-blue-600 rounded-full" style={{width: item.v+'%'}}></div></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="bg-slate-900 p-12 rounded-[48px] text-white flex flex-col justify-center items-center shadow-2xl relative overflow-hidden group">
+                            <Icon name="zap" className="w-12 h-12 text-blue-400 mb-8 shadow-blue-400" />
+                            <div className="text-8xl font-black futura-logo mb-2 italic underline decoration-blue-600 transition-all group-hover:neon-text-glow">SECONDS</div>
+                            <p className="text-slate-400 text-[10px] uppercase font-black tracking-widest mt-8">Instant Student Enrollment Sync</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function AdminDashboard({ events, addEvent, deleteEvent }) {
+            const [dateTBA, setDateTBA] = useState(false);
+            const [timeTBA, setTimeTBA] = useState(false);
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-16 grid lg:grid-cols-3 gap-12">
+                    <div className="lg:col-span-1">
+                        <div className="bg-white p-10 rounded-[40px] border shadow-sm glow-hover">
+                            <h3 className="font-black text-[10px] uppercase tracking-[0.5em] text-blue-600 mb-10 flex gap-3"><Icon name="plus"/> Create Event</h3>
+                            <form onSubmit={addEvent} className="space-y-6">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Event Title</label>
+                                    <input name="title" required placeholder="e.g., Tech Summit 2026" className="w-full px-5 py-4 input-glow rounded-2xl font-bold text-sm shadow-sm" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
+                                        <select name="category" className="w-full px-5 py-4 input-glow rounded-2xl font-bold text-xs cursor-pointer"><option>Seminar</option><option>Workshop</option><option>Placement</option><option>Culturals</option></select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Dept Tag</label>
+                                        <input name="department" required placeholder="e.g., CSE" className="w-full px-5 py-4 input-glow rounded-2xl font-bold text-xs" />
+                                    </div>
+                                </div>
+                                <input name="organizer" required placeholder="In-Charge Name" className="w-full px-5 py-4 input-glow rounded-2xl font-bold text-xs shadow-sm" />
+                                <input name="venue" required placeholder="Venue Coordinate" className="w-full px-5 py-4 input-glow rounded-2xl font-bold text-xs shadow-sm" />
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 px-1">Description</label>
+                                    <textarea name="description" required placeholder="Provide event details..." rows="4" className="w-full px-5 py-4 input-glow rounded-2xl font-bold text-sm shadow-sm"></textarea>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 transition-all hover:text-blue-600">
+                                            <span>Date</span>
+                                            <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="dateTBA" onChange={(e)=>setDateTBA(e.target.checked)}/> TBA</label>
+                                        </div>
+                                        <input name="date" type="date" disabled={dateTBA} className="w-full px-4 py-3.5 input-glow rounded-xl font-bold text-xs disabled:opacity-20 shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 transition-all hover:text-blue-600">
+                                            <span>Time</span>
+                                            <label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="timeTBA" onChange={(e)=>setTimeTBA(e.target.checked)}/> TBA</label>
+                                        </div>
+                                        <input name="time" type="time" disabled={timeTBA} className="w-full px-4 py-3.5 input-glow rounded-xl font-bold text-xs disabled:opacity-20 shadow-sm" />
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[11px] btn-glow shadow-lg transition-all">PUBLISH EVENT</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div className="lg:col-span-2">
+                        <div className="bg-white p-10 rounded-[40px] border shadow-sm">
+                            <h3 className="font-black text-[9px] uppercase text-slate-400 mb-10 tracking-widest">Active Campus Feed ({events.length})</h3>
+                            <div className="space-y-4">
+                                {events.map(ev => (
+                                    <div key={ev.id} className="flex items-center justify-between p-6 bg-slate-50 border rounded-3xl group glow-hover transition-all duration-300">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform"><Icon name="calendar" /></div>
+                                            <div>
+                                                <h4 className="font-black text-lg text-slate-900 futura-logo group-hover:text-blue-600 transition-colors">{ev.title}</h4>
+                                                <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">{ev.category} • {ev.date}</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={()=>deleteEvent(ev.id)} className="p-3 text-slate-300 hover:text-red-500 hover:scale-125 hover:rotate-12 transition-all"><Icon name="trash-2"/></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function LoginView({ handleLogin, error }) {
+            return (
+                <div className="max-w-md mx-auto py-40 px-4 text-center">
+                    <div className="bg-white p-16 rounded-[48px] shadow-2xl border relative glow-hover transition-all">
+                        <div className="bg-blue-600 w-24 h-24 rounded-[28px] mx-auto mb-10 flex items-center justify-center shadow-xl rotate-6 group hover:rotate-0 transition-transform">
+                            <Icon name="shield-check" className="text-white w-12 h-12" />
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-900 futura-logo uppercase mb-10">Admin Node Login</h1>
+                        <form onSubmit={handleLogin} className="space-y-8 text-left">
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Identity Signature</label>
+                                <input name="username" placeholder="B25CSXXXX" className="w-full px-6 py-5 input-glow rounded-2xl font-bold text-sm tracking-tight outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Security Passcode</label>
+                                <input name="password" type="password" placeholder="********" className="w-full px-6 py-5 input-glow rounded-2xl font-bold text-sm tracking-tight outline-none focus:border-blue-600 focus:bg-white transition-all shadow-sm" />
+                            </div>
+                            {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[10px] font-black text-center animate-bounce">{error}</div>}
+                            <button type="submit" className="w-full py-6 bg-slate-900 text-white rounded-2xl font-black text-[11px] btn-glow shadow-xl uppercase tracking-widest">Authorize Access</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
